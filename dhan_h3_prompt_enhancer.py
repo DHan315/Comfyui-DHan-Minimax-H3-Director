@@ -322,7 +322,7 @@ class DHanH3PromptEnhancer(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="DHanH3PromptEnhancer",
-            display_name="Comfyui-DHan-H3 Storyboard Enhancer",
+            display_name="DHan-H3 Storyboard Enhancer",
             category="Comfyui-DHan/Minimax H3 Director",
             description=(
                 "Standalone Ollama storyboard authoring tool. Select the node and use "

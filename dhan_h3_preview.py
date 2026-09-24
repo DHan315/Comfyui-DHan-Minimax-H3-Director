@@ -449,7 +449,7 @@ class DHanMiniMaxH3PreviewOverride(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="DHanMiniMaxH3PreviewOverride",
-            display_name="Comfyui-DHan-Minimax H3 Preview Override",
+            display_name="DHan-Minimax H3 Preview Override",
             category="Comfyui-DHan/Minimax H3 Director",
             description=(
                 "Animated H3 preview for the single model selected by Comfyui-DHan-H3 Settings. "

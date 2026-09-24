@@ -8,13 +8,13 @@ Clone this repository into `ComfyUI/custom_nodes/Comfyui-DHan-Minimax-H3-Directo
 
 ## Nodes
 
-- **Comfyui-DHan-Minimax H3 Director** — timeline editor and conditioning for FL2VA, Ref2VA, and Retake.
-- **Comfyui-DHan-Minimax H3 Reference Hub** — reference-image and reference-video inputs.
-- **Comfyui-DHan-H3 Sampling Preset** — H3 sampling settings.
-- **Comfyui-DHan-H3 Guider** — positive/negative guidance routing.
-- **Comfyui-DHan-Minimax H3 Long Sampler** — multi-window continuation.
-- **Comfyui-DHan-Minimax H3 Preview Override** — animated sampling preview.
-- **Comfyui-DHan-H3 Storyboard Enhancer** — optional Ollama-assisted prompt planning.
+- **DHan-Minimax H3 Director** — timeline editor and conditioning for FL2VA, Ref2VA, and Retake.
+- **DHan-Minimax H3 Reference Hub** — reference-image and reference-video inputs.
+- **DHan-H3 Sampling Preset** — H3 sampling settings.
+- **DHan-H3 Guider** — positive/negative guidance routing.
+- **DHan-Minimax H3 Long Sampler** — multi-window continuation.
+- **DHan-Minimax H3 Preview Override** — animated sampling preview.
+- **DHan-H3 Storyboard Enhancer** — optional Ollama-assisted prompt planning.
 
 The registered node IDs have been renamed with the `DHan` prefix. Workflows saved with the older IDs will need the nodes replaced and reconnected.
 

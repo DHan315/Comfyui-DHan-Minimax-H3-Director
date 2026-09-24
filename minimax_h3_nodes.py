@@ -754,7 +754,7 @@ class DHanMiniMaxH3SmartSampler(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="DHanMiniMaxH3SmartSampler",
-            display_name="Comfyui-DHan-Minimax H3 Smart Sampler",
+            display_name="DHan-Minimax H3 Smart Sampler",
             category="Comfyui-DHan/Minimax H3 Director",
             description=(
                 "Use in place of SamplerCustomAdvanced. <=15s H3 jobs sample normally. "
@@ -819,7 +819,7 @@ class DHanH3Guider(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="DHanH3Guider",
-            display_name="Comfyui-DHan-H3 Guider",
+            display_name="DHan-H3 Guider",
             category="Comfyui-DHan/Minimax H3 Director",
             description=(
                 "Reads the Director's Negative Prompt switch automatically. "
@@ -940,7 +940,7 @@ class DHanH3SamplingPreset(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="DHanH3SamplingPreset",
-            display_name="Comfyui-DHan-H3 Sampling Preset",
+            display_name="DHan-H3 Sampling Preset",
             category="Comfyui-DHan/Minimax H3 Director",
             description=(
                 "MiniMax H3 sampling preset. Turbo presets use their named number "
@@ -1576,7 +1576,7 @@ class DHanMiniMaxH3LongSampler(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="DHanMiniMaxH3LongSampler",
-            display_name="Comfyui-DHan-Minimax H3 Long Sampler",
+            display_name="DHan-Minimax H3 Long Sampler",
             category="Comfyui-DHan/Minimax H3 Director",
             description=(
                 "Use in place of SamplerCustomAdvanced. At or below the safe duration it "
@@ -1985,7 +1985,7 @@ class DHanMiniMaxH3RenderWindow(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="DHanMiniMaxH3RenderWindow",
-            display_name="Comfyui-DHan-Minimax H3 Render Window",
+            display_name="DHan-Minimax H3 Render Window",
             category="Comfyui-DHan/Minimax H3 Director",
             description=(
                 "Lets the Director use timelines longer than one native H3 window. "
@@ -2071,7 +2071,7 @@ class DHanMiniMaxH3ReferenceHub(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="DHanMiniMaxH3ReferenceHub",
-            display_name="Comfyui-DHan-Minimax H3 Reference Hub",
+            display_name="DHan-Minimax H3 Reference Hub",
             category="Comfyui-DHan/Minimax H3 Director",
             description=(
                 "Dynamic Ref2VA reference-image stacker. Connect image_1 and a new image input grows automatically, "
@@ -2128,7 +2128,7 @@ class DHanMiniMaxH3Director(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="DHanMiniMaxH3Director",
-            display_name="Comfyui-DHan-Minimax H3 Director",
+            display_name="DHan-Minimax H3 Director",
             category="Comfyui-DHan/Minimax H3 Director",
             description="Tuned DHan timeline behavior with native MiniMax H3 FL2VA/Ref2VA conditioning. Sampling stays external.",
             inputs=[
