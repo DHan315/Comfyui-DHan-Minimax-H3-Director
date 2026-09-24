@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-dhan-minimax-h3-director"
+description = "Timeline director and companion nodes for MiniMax H3 in ComfyUI."
+version = "0.4.90"
+requires-python = ">=3.10"
+
+[project.urls]
+Repository = "https://github.com/DHan315/Comfyui-DHan-Minimax-H3-Director"
+"Bug Tracker" = "https://github.com/DHan315/Comfyui-DHan-Minimax-H3-Director/issues"
+
+[tool.comfy]
+PublisherId = "dhan315"
+DisplayName = "Comfyui-DHan-Minimax H3 Director"
+includes = []
