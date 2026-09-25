@@ -19,6 +19,7 @@ from comfy_api.latest import io
 
 log = logging.getLogger(__name__)
 EVENT = "dhan_h3_prompt_enhancer_result"
+NO_THINK_INSTRUCTION = "/no_think\nDo not use thinking mode. Do not write analysis. Return only the final JSON object.\n\n"
 
 SYSTEM_PROMPT = """You are a storyboard writer specialized for MiniMax H3 video generation.
 
@@ -257,17 +258,47 @@ def _image_to_b64(image, max_size=768):
     return base64.b64encode(bio.getvalue()).decode("ascii")
 
 
-def _extract_json(text):
+def _ollama_response_summary(data, limit=700):
+    if not isinstance(data, dict):
+        return repr(data)[:limit]
+    safe = {}
+    for key, value in data.items():
+        if key == "message" and isinstance(value, dict):
+            safe[key] = {k: ("" if k == "content" else v) for k, v in value.items()}
+        elif key not in {"response", "context"}:
+            safe[key] = value
+    return json.dumps(safe, ensure_ascii=False, default=str)[:limit]
+
+
+def _extract_json(text, source="model response", response_summary=None):
     text = (text or "").strip()
+    if not text:
+        details = f" Ollama response metadata: {response_summary}" if response_summary else ""
+        raise ValueError(
+            f"DHan H3 Storyboard Enhancer: empty response content from {source}. "
+            "Ollama returned no JSON text after the available retries."
+            f"{details}"
+        )
     text = re.sub(r"^\s*```(?:json)?\s*", "", text, flags=re.I)
     text = re.sub(r"\s*```\s*$", "", text)
     try:
         return json.loads(text)
-    except Exception:
+    except json.JSONDecodeError as exc:
         m = re.search(r"\{.*\}", text, re.S)
         if not m:
-            raise
-        return json.loads(m.group(0))
+            preview = text[:500].replace("\n", "\\n")
+            raise ValueError(
+                f"DHan H3 Storyboard Enhancer: {source} was not valid JSON. "
+                f"Response preview: {preview}"
+            ) from exc
+        try:
+            return json.loads(m.group(0))
+        except json.JSONDecodeError as inner_exc:
+            preview = text[:500].replace("\n", "\\n")
+            raise ValueError(
+                f"DHan H3 Storyboard Enhancer: {source} contained a JSON-looking block "
+                f"that could not be parsed. Response preview: {preview}"
+            ) from inner_exc
 
 
 def _format_storyboard(items, parts):
@@ -500,7 +531,7 @@ class DHanH3PromptEnhancer(io.ComfyNode):
 
         msg = {
             "role": "user",
-            "content": (
+            "content": NO_THINK_INSTRUCTION + (
                 f"Create a MiniMax H3 global prompt and exactly {parts} storyboard prompts "
                 f"for a fixed {float(duration_seconds):.3f}-second edit.\n"
                 f"Prompt detail level: {detail_level}. {detail_rule}\n"
@@ -536,6 +567,7 @@ class DHanH3PromptEnhancer(io.ComfyNode):
         payload = {
             "model": model,
             "stream": False,
+            "think": False,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 msg,
@@ -543,7 +575,7 @@ class DHanH3PromptEnhancer(io.ComfyNode):
             "options": {
                 "seed": int(seed),
                 "temperature": 0.4,
-                "num_predict": 2400,
+                "num_predict": 8192,
             },
             "format": "json",
             "keep_alive": 0,
@@ -598,14 +630,62 @@ class DHanH3PromptEnhancer(io.ComfyNode):
                         "is running and port 11434 is responsive."
                     ) from health_error
 
-                try:
-                    async with session.post(url + "/api/chat", json=payload) as resp:
+                async def post_ollama(endpoint, request_payload):
+                    async with session.post(url + endpoint, json=request_payload) as resp:
                         body = await resp.text()
                         if resp.status >= 400:
                             raise ValueError(
-                                f"Ollama HTTP {resp.status}: {body[:600]}"
+                                f"Ollama {endpoint} HTTP {resp.status}: {body[:600]}"
                             )
-                        data = json.loads(body)
+                        try:
+                            return json.loads(body)
+                        except json.JSONDecodeError as exc:
+                            preview = body[:600].replace("\n", "\\n")
+                            raise ValueError(
+                                f"DHan H3 Storyboard Enhancer: Ollama returned a non-JSON "
+                                f"HTTP response from {endpoint}. Response preview: {preview}"
+                            ) from exc
+
+                try:
+                    data = await post_ollama("/api/chat", payload)
+                    content = ((data.get("message") or {}).get("content") or "").strip()
+                    if not content:
+                        fallback_payload = dict(payload)
+                        fallback_payload.pop("format", None)
+                        log.warning(
+                            "[DHan H3 Storyboard Enhancer] Ollama returned empty chat content "
+                            "with format=json; retrying without forced JSON mode."
+                        )
+                        data = await post_ollama("/api/chat", fallback_payload)
+                        content = ((data.get("message") or {}).get("content") or "").strip()
+                    if not content:
+                        log.warning(
+                            "[DHan H3 Storyboard Enhancer] Ollama chat still returned empty "
+                            "content; retrying through /api/generate."
+                        )
+                        generate_payload = {
+                            "model": model,
+                            "prompt": (
+                                NO_THINK_INSTRUCTION + SYSTEM_PROMPT
+                                + "\n\nUSER REQUEST:\n" + str(msg.get("content") or "")
+                                + "\n\nReturn valid JSON only."
+                            ),
+                            "stream": False,
+                            "think": False,
+                            "options": payload["options"],
+                            "format": "json",
+                            "keep_alive": 0,
+                        }
+                        if ollama_images:
+                            generate_payload["images"] = ollama_images
+                        generate_data = await post_ollama("/api/generate", generate_payload)
+                        data = {
+                            "message": {"content": str(generate_data.get("response") or "")},
+                            "generate_response": {
+                                k: v for k, v in generate_data.items()
+                                if k not in {"response", "context"}
+                            },
+                        }
                 except aiohttp.ClientConnectorError as exc:
                     raise ConnectionError(
                         "Comfyui-DHan-H3 Storyboard Enhancer: lost connection to Ollama before "
@@ -625,7 +705,9 @@ class DHanH3PromptEnhancer(io.ComfyNode):
                     ) from exc
 
                 parsed = _extract_json(
-                    ((data.get("message") or {}).get("content") or "").strip()
+                    ((data.get("message") or {}).get("content") or "").strip(),
+                    source="Ollama response",
+                    response_summary=_ollama_response_summary(data),
                 )
                 global_prompt = str(parsed.get("global_prompt") or "").strip()
                 raw_items = parsed.get("storyboard") or []
